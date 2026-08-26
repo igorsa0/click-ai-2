@@ -83,7 +83,7 @@ h1{font-size:clamp(42px,7vw,78px);line-height:.98;letter-spacing:-4px;margin:0 a
 </div>
 <script>
 const q=document.getElementById('question'),result=document.getElementById('result'),shown=document.getElementById('shownQuestion'),metrics=document.getElementById('metrics'),verdict=document.getElementById('verdict');
-const examples=['Quero juntar R$ 20 mil em 5 meses','R$ 2.000 à vista ou 10x de R$ 230','Esse produto está caro? Custa R$ 1.900 e a referência é R$ 2.200','Quero comparar R$ 1.700 e R$ 2.050','Quanto dá 15% de R$ 2.000?','Vendi por R$ 1.000 e gastei R$ 650'];
+const examples=['Quanto esse carro vai me custar por mês?','Quero juntar R$ 20 mil em 5 meses','R$ 2.000 à vista ou 10x de R$ 230','Esse produto está caro? Custa R$ 1.900 e a referência é R$ 2.200','Quero comparar R$ 1.700 e R$ 2.050','Quanto dá 15% de R$ 2.000?','Vendi por R$ 1.000 e gastei R$ 650'];
 examples.forEach(t=>{const b=document.createElement('button');b.className='example';b.textContent=t;b.onclick=()=>{q.value=t;analyze(t)};document.getElementById('examples').appendChild(b)});
 let state={flow:null,data:{},original:''};
 const money=n=>Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -103,10 +103,11 @@ function flow(t){
   if(/(porcentagem|percentual|%).*(de|sobre)/.test(t)||/%.*r\$|r\$.*%/.test(t))return'percent';
   if(/(lucro|margem|vendi|venda|ganho|ganhar)/.test(t))return'lucro';
   if(/(por unidade|cada unidade|unitário|unitario|custa cada)/.test(t))return'unit';
+  if(/(quanto.*vai.*custar|custo real|custo total|custo.*por mês|custo.*mensal|carro.*vai.*custar|compra.*vai.*custar)/.test(t))return'custo';
   if(/(combustível|combustivel|gasto.*mês|gastar.*mês|custo.*mês|por mês)/.test(t))return'gasto';
   return'geral';
 }
-function analyze(text){state={flow:flow(text.toLowerCase()),data:{},original:text};switch(state.flow){case'meta':return metaStart(text);case'preco':return precoStart(text);case'vale':case'parcel':return valeStart(text);case'comparar':return compararStart(text);case'percent':return percentStart(text);case'lucro':return lucroStart(text);case'unit':return unitStart(text);case'gasto':return gastoStart(text);default:return geral(text)}}
+function analyze(text){state={flow:flow(text.toLowerCase()),data:{},original:text};switch(state.flow){case'meta':return metaStart(text);case'preco':return precoStart(text);case'vale':case'parcel':return valeStart(text);case'comparar':return compararStart(text);case'percent':return percentStart(text);case'lucro':return lucroStart(text);case'unit':return unitStart(text);case'gasto':return gastoStart(text);case'custo':return custoStart(text);default:return geral(text)}}
 function metaStart(text){const target=parseMoney(text),months=parseMonths(text);state.data.target=target;if(months)return metaResult(target,months);if(target)return ask(text,[['Meta',money(target)],['Prazo','Ainda falta'],['Próximo passo','Informar prazo'],['Status','Pronto']],`Em quanto tempo você quer atingir ${money(target)}?`,'Ex.: 12 meses');return ask(text,[['Categoria','Meta'],['Dado necessário','Valor da meta'],['Exemplo','R$ 20 mil'],['Próximo passo','Meta']], 'Qual valor você quer juntar?','Ex.: R$ 20 mil');}
 function metaResult(target,months){const per=target/months;show(state.original,[['Meta',money(target)],['Prazo',months+' meses'],['Guardar por mês',money(per)],['Total sem juros',money(target)]],`<strong>✅ Meta calculada.</strong><br><span class="muted">Para juntar ${money(target)} em ${months} meses, você precisa guardar aproximadamente <b>${money(per)}</b> por mês.</span>`);}
 function cashVs(text,price){let p=price||0;const m=text.match(/(\d+)\s*x\s*de\s*r?\$?\s*([0-9.,]+)/i);if(!m||!p)return null;const n=parseInt(m[1],10),par=nBR(m[2]),total=n*par,diff=total-p,pct=p?diff/p*100:0;return{p,n,par,total,diff,pct};}
@@ -125,12 +126,98 @@ function compararStart(text){const vals=extractMoneyValues(text);if(vals.length>
 function percentStart(text){const vals=(String(text).match(/[0-9]+(?:[.,][0-9]+)?/g)||[]).map(v=>parseFloat(v.replace('.','').replace(',','.')));if(vals.length>=2){const r=vals[0]*vals[1]/100;show(text,[['Percentual',vals[0]+'%'],['Base',money(vals[1])],['Resultado',money(r)],['Fórmula',vals[0]+'% × '+money(vals[1])]],`<strong>✅ Resultado.</strong><br><span class="muted">${vals[0]}% de ${money(vals[1])} é <b>${money(r)}</b>.</span>`);return;}ask(text,[['Categoria','Porcentagem'],['Dado necessário','Percentual + valor'],['Exemplo','15% de R$ 2.000'],['Status','Faltam dados']], 'Informe o percentual e o valor base.','Ex.: 15% de R$ 2.000');}
 function lucroStart(text){const vals=extractMoneyValues(text);if(vals.length>=2){const venda=vals[0],custo=vals[1],lucro=venda-custo,margem=venda?lucro/venda*100:0;show(text,[['Venda',money(venda)],['Custo',money(custo)],['Lucro',money(lucro)],['Margem',margem.toFixed(1)+'%']],lucro>0?`<strong>✅ Há lucro.</strong><br><span class="muted">Resultado de ${money(lucro)} por venda.</span>`:`<strong>🔴 Não há lucro.</strong><br><span class="muted">Resultado: ${money(lucro)}.</span>`);return;}ask(text,[['Categoria','Lucro'],['Dado necessário','Venda + custo'],['Exemplo','R$ 1.000 de venda e R$ 650 de custo'],['Status','Faltam dados']], 'Informe venda e custo total.','Ex.: R$ 1.000 de venda e R$ 650 de custo');}
 function unitStart(text){const vals=extractMoneyValues(text);const qty=String(text).match(/(\d+)\s*(?:peças|pecas|unidades|itens)?/i);if(vals.length&&qty){const qn=parseInt(qty[1],10),u=vals[0]/qn;show(text,[['Total',money(vals[0])],['Quantidade',qn],['Por unidade',money(u)],['Fórmula',money(vals[0])+' ÷ '+qn]],`<strong>✅ Custo unitário.</strong><br><span class="muted">Cada unidade custa <b>${money(u)}</b>.</span>`);return;}ask(text,[['Categoria','Custo unitário'],['Dado necessário','Total + quantidade'],['Exemplo','R$ 240 em 12 peças'],['Status','Faltam dados']], 'Informe o valor total e a quantidade.','Ex.: R$ 240 em 12 peças');}
+function parsePercentText(text){const m=String(text).match(/([0-9]+(?:[.,][0-9]+)?)\s*%/);return m?parseFloat(m[1].replace(',','.')):0;}
+function custoStart(text){
+ const vals=extractMoneyValues(text);
+ const price=vals[0]||0;
+ state.data.price=price;
+ state.data.entry=undefined;
+ state.data.installments=undefined;
+ state.data.installment=undefined;
+ state.data.extra=undefined;
+ if(!price){
+   return ask(text,[['Categoria','Custo real'],['Dado necessário','Preço da compra'],['Exemplo','Carro de R$ 80 mil'],['Status','Faltam dados']], 'Qual é o preço da compra?','Ex.: R$ 80 mil');
+ }
+ state.flow='custo';
+ return ask(text,[['Preço',money(price)],['Próximo dado','Entrada'],['Status','Preço salvo'],['Objetivo','Custo total']], 'Quanto você pretende dar de entrada?','Ex.: R$ 20 mil');
+}
+function parseInstallments(text){
+ const m=String(text).toLowerCase().match(/(?:^|\s)(\d+)\s*(?:parcelas?|x|vezes?)(?:\s|$)/i);
+ if(m)return parseInt(m[1],10);
+ const m2=String(text).match(/^(\d+)$/);
+ return m2?parseInt(m2[1],10):0;
+}
+function parseInstallmentValue(text){
+ const m=String(text).match(/r\$\s*([0-9][0-9.,]*\s*(?:milhões?|milhão|mil|k)?)/i);
+ if(m)return parseMoney(m[0]);
+ return parseMoney(text);
+}
+function custoFollow(v){
+ const x=state.data;
+ if(x.entry===undefined){
+   const entry=parseMoney(v);
+   if(!Number.isFinite(entry)||entry<0||entry>x.price){
+     return ask(state.original,[['Preço',money(x.price)],['Entrada','Valor inválido'],['Próximo passo','Corrigir entrada'],['Status','Aguardando']], 'Informe uma entrada entre R$ 0 e o preço da compra.','Ex.: R$ 20 mil');
+   }
+   x.entry=entry;
+   return ask(state.original,[['Preço',money(x.price)],['Entrada',money(entry)],['Próximo dado','Número de parcelas'],['Status','Entrada salva']], 'Vai pagar o restante em quantas parcelas?','Ex.: 48 parcelas');
+ }
+ if(x.installments===undefined){
+   const n=parseInstallments(v);
+   if(!n||n<1||n>600){
+     return ask(state.original,[['Preço',money(x.price)],['Entrada',money(x.entry)],['Parcelas','Não reconhecido'],['Status','Aguardando']], 'Informe apenas o número de parcelas.','Ex.: 48 parcelas');
+   }
+   x.installments=n;
+   return ask(state.original,[['Preço',money(x.price)],['Entrada',money(x.entry)],['Parcelas',n+'x'],['Próximo dado','Valor de cada parcela'],['Status','Número salvo']], 'Qual será o valor de cada parcela?','Ex.: R$ 1.650 por mês');
+ }
+ if(x.installment===undefined){
+   const par=parseInstallmentValue(v);
+   if(!Number.isFinite(par)||par<=0){
+     return ask(state.original,[['Preço',money(x.price)],['Entrada',money(x.entry)],['Parcelas',x.installments+'x'],['Parcela','Não reconhecida'],['Status','Aguardando']], 'Informe o valor de cada parcela.','Ex.: R$ 1.650');
+   }
+   x.installment=par;
+   return ask(state.original,[['Preço',money(x.price)],['Entrada',money(x.entry)],['Parcelas',x.installments+'x'],['Parcela',money(par)],['Próximo dado','Custos mensais extras'],['Status','Parcela salva']], 'Quanto você estima gastar por mês com custos extras? Se não quiser incluir, digite 0.','Ex.: R$ 900 por mês');
+ }
+ const extra=parseMoney(v);
+ if(!Number.isFinite(extra)||extra<0){
+   return ask(state.original,[['Preço',money(x.price)],['Entrada',money(x.entry)],['Parcelas',x.installments+'x'],['Parcela',money(x.installment)],['Custos extras','Valor inválido'],['Status','Aguardando']], 'Informe um valor de custos extras ou digite 0.','Ex.: R$ 900');
+ }
+ x.extra=extra;
+ const financed=x.price-x.entry;
+ const totalInstallments=x.installments*x.installment;
+ const paidSoFar=x.entry+totalInstallments;
+ const outstanding=Math.max(financed-totalInstallments,0);
+ const overpayment=Math.max(totalInstallments-financed,0);
+ const extrasTotal=extra*x.installments;
+ const periodDisbursement=paidSoFar+extrasTotal;
+ const fullyCovers=totalInstallments>=financed;
+ const finalPurchaseCost=x.entry+totalInstallments;
+ const monthlyFinancing=x.installment+extra;
+ let summary='';
+ if(fullyCovers){
+   summary=`As parcelas informadas quitam o saldo de ${money(financed)}. O custo da compra é ${money(finalPurchaseCost)} (${money(overpayment)} acima do preço à vista).`;
+ }else{
+   summary=`Nos ${x.installments} meses informados, você terá desembolsado ${money(paidSoFar)} pela compra, mas ainda faltará ${money(outstanding)} para quitar o saldo de ${money(financed)}.`;
+ }
+ show(state.original,[
+   ['Preço da compra',money(x.price)],
+   ['Entrada',money(x.entry)],
+   ['Saldo financiado',money(financed)],
+   ['Parcelas',x.installments+'x de '+money(x.installment)],
+   ['Total das parcelas',money(totalInstallments)],
+   ['Saldo após o período',money(outstanding)],
+   ['Custos extras',money(extra)+'/mês'],
+   ['Extras no período',money(extrasTotal)],
+   ['Desembolso no período',money(periodDisbursement)],
+   ['Custo mensal no período',money(monthlyFinancing)]
+ ],`<strong>💰 Custo real estimado.</strong><br><span class="muted">${summary}<br><br>Considerando ${money(extra)} por mês em custos extras durante ${x.installments} meses, o desembolso acumulado no período chega a <b>${money(periodDisbursement)}</b>. <b>Esse valor não significa necessariamente que o carro de ${money(x.price)} esteja quitado</b>; confira o saldo restante acima.</span><br><span class="note">Simulação simples. Não separa juros embutidos na parcela, nem considera depreciação, impostos, reajustes ou variação dos custos.</span>`);
+}
 function gastoStart(text){
  const vals=extractMoneyValues(text); if(vals.length){const monthly=vals[0],annual=monthly*12;show(text,[['Gasto mensal',money(monthly)],['Gasto anual',money(annual)],['12 meses',money(annual)],['Média diária',money(monthly/30)]],`<strong>📊 Gasto estimado.</strong><br><span class="muted">Um gasto de <b>${money(monthly)}</b> por mês representa aproximadamente <b>${money(annual)}</b> em 12 meses.</span>`);return;}
  ask(text,[['Categoria','Gasto mensal'],['Dado necessário','Valor mensal'],['Exemplo','R$ 800 por mês'],['Status','Faltam dados']], 'Qual é o valor que você gasta por mês?','Ex.: R$ 800 por mês');
 }
 function geral(text){show(text,[['Categoria','Pergunta geral'],['Status','Modo protótipo'],['Ativo','Vários módulos'],['Próximo passo','Dar contexto']],`<strong>🤖 Entendi.</strong><br><span class="muted">Ainda estou aprendendo esse tipo de pergunta. Experimente uma análise de <b>meta, preço, parcelamento, comparação, lucro, porcentagem ou custo por unidade</b>.</span>`)}
-function nextFollow(v){if(state.flow==='meta'){const m=parseMonths(v);if(m)return metaResult(state.data.target,m)}if(state.flow==='vale'){const x=cashVs(v,state.data.price);if(x)return valeResult(x);const p=parseMoney(v);if(p){state.data.price=p;return ask(state.original,[['À vista',money(p)],['Próximo dado','Parcelamento'],['Status','Preço salvo'],['Nível','Médio']],'Agora informe parcelas e valor de cada parcela.','Ex.: 10x de R$ 230')}}}
+function nextFollow(v){if(state.flow==='meta'){const m=parseMonths(v);if(m)return metaResult(state.data.target,m)}if(state.flow==='vale'){const x=cashVs(v,state.data.price);if(x)return valeResult(x);const p=parseMoney(v);if(p){state.data.price=p;return ask(state.original,[['À vista',money(p)],['Próximo dado','Parcelamento'],['Status','Preço salvo'],['Nível','Médio']],'Agora informe parcelas e valor de cada parcela.','Ex.: 10x de R$ 230')}}if(state.flow==='custo')return custoFollow(v)}
 document.getElementById('analyze').onclick=()=>{const t=q.value.replace(/\s+/g,' ').trim();if(t)analyze(t)};
 q.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('analyze').click()});
 document.getElementById('again').onclick=()=>{result.classList.remove('show');q.value='';q.focus()};
