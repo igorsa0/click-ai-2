@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CLICK AI — Pergunte. Compare. Decida.</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#07111f;color:#eef4ff;min-height:100vh}.wrap{max-width:1100px;margin:auto;padding:24px 18px 60px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:38px}.brand{font-size:26px;font-weight:900;letter-spacing:-1px}.brand span{color:#5ee7ff}.badge{font-size:12px;padding:7px 11px;border:1px solid #1f3857;border-radius:999px;color:#b9cae2}.hero{text-align:center}.hero h1{font-size:clamp(36px,6vw,64px);line-height:1.02;margin:0 auto 14px;letter-spacing:-2.5px}.hero p{color:#9fb2cc;font-size:18px;max-width:720px;margin:0 auto 26px}.card{background:#0c1a2b;border:1px solid #1c334e;border-radius:22px;box-shadow:0 16px 45px rgba(0,0,0,.2)}.search{padding:15px;display:flex;gap:10px;max-width:900px;margin:0 auto}.search input,.followinput{flex:1;background:#081524;border:1px solid #24415f;border-radius:14px;color:#fff;padding:17px;font-size:16px;outline:none}.search input:focus,.followinput:focus{border-color:#5ee7ff}.btn{border:0;border-radius:14px;background:#5ee7ff;color:#06202c;font-weight:800;padding:0 22px;font-size:15px;cursor:pointer}.examples{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin:16px auto 14px;max-width:950px}.example{background:#0a1727;border:1px solid #1b3653;color:#bfd2e8;padding:10px 13px;border-radius:999px;font-size:13px;cursor:pointer}.example:hover{border-color:#5ee7ff;color:#fff}.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:30px}.chip{font-size:12px;color:#9fb2cc;background:#0a1727;border:1px solid #17314e;padding:8px 10px;border-radius:999px}.result{display:none;max-width:900px;margin:0 auto}.result.show{display:block}.muted{color:#9fb2cc}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}.metric{padding:17px;background:#0a1727;border:1px solid #1c334e;border-radius:16px}.metric b{display:block;font-size:21px;margin-top:5px}.verdict{margin-top:18px;padding:18px;border-left:4px solid #5ee7ff;background:#091726;border-radius:12px;line-height:1.55}.followbox{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}.followinput{min-width:220px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}.ghost{background:transparent;color:#cde1f5;border:1px solid #284766;border-radius:12px;padding:11px 14px;cursor:pointer}.searchlinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.searchpanel{margin-top:14px;padding:14px;background:#081524;border:1px solid #1c334e;border-radius:14px}.searchpanel h3{margin:0 0 8px;font-size:15px}.small{font-size:12px;color:#8ea5bf}.searchall{margin-top:10px}.searchlink{display:inline-block;text-decoration:none;color:#cde1f5;background:#0a1727;border:1px solid #284766;border-radius:12px;padding:10px 12px;font-size:13px}.searchlink:hover{border-color:#5ee7ff}.note{font-size:12px;color:#7f95b2;margin-top:14px}.footer{margin-top:38px;text-align:center;color:#7188a5;font-size:12px}
+@media(max-width:720px){.search{flex-direction:column}.btn{height:50px}.grid{grid-template-columns:1fr}.top{align-items:flex-start}}
+</style></head>
+<body><div class="wrap">
+<header class="top"><div class="brand">CLICK <span>AI</span></div><div class="badge">Protótipo gratuito • Motor local</div></header>
+<main><section class="hero"><h1>Pergunte. Compare. Decida.</h1><p>Uma central gratuita para transformar dúvidas do dia a dia em cálculos, comparações e decisões claras.</p>
+<div class="card search"><input id="question" placeholder="Ex.: Vale a pena comprar à vista?" autocomplete="off"><button class="btn" id="analyze">Analisar</button></div>
+<div class="examples" id="examples"></div><div class="chips"><span class="chip">Finanças</span><span class="chip">Compras</span><span class="chip">Metas</span><span class="chip">Combustível</span><span class="chip">Lucro</span><span class="chip">Comparações</span><span class="chip">Parcelas</span><span class="chip">Porcentagem</span></div></section>
+<section class="result" id="result"><div class="card" style="padding:22px"><div class="muted">Sua pergunta</div><h2 id="shownQuestion" style="margin:6px 0 0"></h2><div class="grid" id="metrics"></div><div class="verdict" id="verdict"></div><div class="actions"><button class="ghost" id="again">Fazer outra análise</button><button class="ghost" id="copy">Copiar resultado</button></div><div class="note">Protótipo demonstrativo. Valores financeiros não consideram automaticamente juros, inflação, impostos ou rendimento quando não informados.</div></div></section></main>
+<div class="footer">CLICK AI • versão 0.8 • uma pergunta, várias ferramentas</div></div>
+<script>
+const q=document.getElementById('question'),result=document.getElementById('result'),shown=document.getElementById('shownQuestion'),metrics=document.getElementById('metrics'),verdict=document.getElementById('verdict');
+const examples=[
+'Quero juntar R$ 20 mil em 5 meses','Vale a pena comprar à vista?','R$ 2.000 à vista ou 10x de R$ 230','Esse produto está caro? Custa R$ 1.900 e a referência é R$ 2.200'
+,'Qual opção é mais barata?','Quanto vou gastar por mês com combustível?','Quanto dá 15% de R$ 2.000?','Tenho R$ 10 mil e quero financiar um carro de R$ 50 mil','Vendi por R$ 1.000 e gastei R$ 650. Qual meu lucro?','Se 3 itens custam R$ 90, quanto custam 10?','Quero saber o custo por unidade de R$ 240 em 12 peças'
+];
+examples.forEach(t=>{const b=document.createElement('button');b.className='example';b.textContent=t;b.onclick=()=>{q.value=t;analyze(t)};document.getElementById('examples').appendChild(b)});
+let state={flow:null,step:0,data:{},original:''};
+const money=n=>Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const nBR=v=>{let s=String(v).toLowerCase().trim().replace(/r\$|rs\$|reais?/g,' ').replace(/\s/g,''); if(!s)return 0; let mult=1; if(/milh|milhão|milhões/.test(s))mult=1e6; else if(/mil|\bk\b/.test(s))mult=1e3; s=s.replace(/milhões?|milhão|mil|k/gi,''); if(s.includes('.')&&s.includes(',')){s=s.replace(/\./g,'').replace(',','.');} else if(s.includes(',')){s=s.replace(',','.');} else if(/^\d{1,3}\.\d{3}$/.test(s)){s=s.replace(/\./g,'');} else if((s.match(/\./g)||[]).length>1){s=s.replace(/\./g,'');} return (Number(s)||0)*mult};
+const parseMoney=text=>{const raw=String(text).replace(/\bde\b/gi,' ');const explicit=raw.match(/r\$\s*([0-9][0-9.,]*)\s*(milhões?|milhão|mi\b|mil\b|k\b)?/i);const m=explicit||raw.match(/([0-9][0-9.,]*)\s*(milhões?|milhão|mi\b|mil\b|k\b)?/i);if(!m)return 0;let s=m[1],unit=(m[2]||'').toLowerCase();let x=nBR(s);if(unit){if(/^milh|^mi$/.test(unit))x=Number(s.replace(/\./g,'').replace(',','.'))*1e6;else if(/^mil$|^k$/.test(unit))x=Number(s.replace(/\./g,'').replace(',','.'))*1e3;}return x};
+const parseMonths=text=>{const t=String(text).toLowerCase();let m=t.match(/([0-9]+(?:[.,][0-9]+)?)\s*anos?/);if(m)return Math.round(parseFloat(m[1].replace(',','.'))*12);m=t.match(/([0-9]+)\s*mes(?:es)?/);return m?parseInt(m[1],10):0};
+const parseNumber=text=>{const m=String(text).match(/[0-9]+(?:[.,][0-9]+)?/);return m?parseFloat(m[0].replace(',','.')):0};
+function setCards(cards){metrics.innerHTML=cards.map(([a,b])=>`<div class="metric"><div class="muted">${a}</div><b>${b}</b></div>`).join('')}
+function show(text,cards,html){shown.textContent=text;setCards(cards);verdict.innerHTML=html;result.classList.add('show');result.scrollIntoView({behavior:'smooth',block:'start'})}
+function ask(text,cards,prompt,placeholder='Digite aqui...'){show(text,cards,`<strong>🧭 Vamos completar a análise.</strong><br><span class="muted">${prompt}</span><div class="followbox"><input id="follow" class="followinput" placeholder="${placeholder}"><button class="btn" id="followBtn" style="height:49px">Continuar</button></div>`);const f=document.getElementById('follow');document.getElementById('followBtn').onclick=()=>{if(f.value.trim())nextFollow(f.value.trim())};f.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('followBtn').click()});setTimeout(()=>f.focus(),60)}
+function flow(t){
+ if(/(juntar|guardar|meta|economizar).*(r\$|mil|reais|dinheiro)/.test(t)||(/quero.*r\$/.test(t)&&/(mes|ano)/.test(t)))return'meta';
+ if(/(vale a pena|compensa|boa compra|bom negócio|devo comprar)/.test(t))return'vale';
+ if(/(está caro|esta caro|preço.*caro|caro|oferta|promoção)/.test(t))return'preco';
+ if(/(mais barata|mais barato|comparar|qual.*melhor|opção.*melhor)/.test(t))return'comparar';
+ if(/(gasto|gastar|custa|custo).*(mês|mes|por mês|mensal)/.test(t)||/combustível|combustivel/.test(t))return'gasto';
+ if(/(lucro|margem|ganhei|ganho|vendi|venda)/.test(t))return'lucro';
+ if(/(porcentagem|percentual|%).*(de|sobre)/.test(t)||/%.*r\$|r\$.*%/.test(t))return'percent';
+ if(/(regra de três|regra de tres|se .* quanto)/.test(t))return'regra3';
+ if(/(por unidade|cada unidade|unitário|unitario)/.test(t))return'unit';
+ if(/(parcela|parcelar|financiar|à vista|a vista)/.test(t))return'parcel';
+ if(/(carro|veículo|veiculo|moto).*(compr|financ)/.test(t))return'veiculo';
+ return'geral';
+}
+function analyze(text){
+  const t=text.toLowerCase();
+  state={flow:flow(t),step:0,data:{},original:text};
+  switch(state.flow){
+    case 'meta': return metaStart(text);
+    case 'vale': return valeStart(text);
+    case 'preco': return precoStart(text);
+    case 'comparar': return compararStart(text);
+    case 'gasto': return gastoStart(text);
+    case 'lucro': return lucroStart(text);
+    case 'percent': return percentStart(text);
+    case 'regra3': return regra3Start(text);
+    case 'unit': return unitStart(text);
+    case 'parcel': return parcelStart(text);
+    case 'veiculo': return veiculoStart(text);
+    default: return geral(text);
+  }
+}
+function metaStart(text){const target=parseMoney(text),months=parseMonths(text);state.data.target=target;state.data.months=months;if(!target)return ask(text,[['Categoria','Planejamento'],['Dado necessário','Valor da meta'],['Exemplo','R$ 20 mil'],['Nível','Médio']],'Quanto você quer juntar?','Ex.: R$ 20 mil');if(months){return metaResult(target,months)}ask(text,[['Categoria','Planejamento'],['Meta',money(target)],['Dado necessário','Prazo'],['Exemplo','6 meses ou 2 anos'],['Nível','Médio']],'Em quanto tempo você quer atingir essa meta?','Ex.: 10 meses')}
+function metaResult(target,months){const monthly=target/months;show(state.original,[['Meta',money(target)],['Prazo',months+' meses'],['Guardar por mês',money(monthly)],['Total sem juros',money(target)]],`<strong>✅ Meta calculada.</strong><br><span class="muted">Para juntar ${money(target)} em ${months} meses, você precisa guardar aproximadamente <b>${money(monthly)}</b> por mês.</span>`) }
+function parseInstallment(text){const m=String(text).match(/([0-9]+)\s*x\s*(?:de|por)?\s*(?:r\$\s*)?([0-9][0-9.,]*)/i);if(!m)return null;const c=+m[1],e=nBR(m[2]);return c&&e?{count:c,each:e,total:c*e}:null}
+function cashVs(text,cashHint=0){const t=String(text),cashM=t.match(/(?:à|a)\s*vista\s*(?:[:=-])?\s*(?:r\$\s*)?([0-9][0-9.,]*)/i),inst=parseInstallment(t);if(cashM&&inst)return{cash:nBR(cashM[1]),...inst};if(cashHint&&inst)return{cash:cashHint,...inst};return null}
+function valeStart(text){const p=parseMoney(text),combo=cashVs(text,p);if(combo)return valeResult(combo);state.data.price=p||0;if(p)ask(text,[['Categoria','Decisão de compra'],['Preço informado',money(p)],['Próximo dado','Condição'],['Nível','Médio']],'É à vista ou parcelado? Se for parcelado, diga o total. Ex.: “10x de R$ 230”.','Ex.: 10x de R$ 230');else ask(text,[['Categoria','Decisão de compra'],['Dado necessário','Preços'],['Exemplo','R$ 2.000 à vista ou 10x de R$ 230'],['Nível','Médio']],'Quais são as condições?','Ex.: R$ 2.000 à vista ou 10x de R$ 230')}
+function valeResult(x){const diff=x.total-x.cash,pct=x.cash?diff/x.cash*100:0;let h=diff>0?`<strong>✅ À vista é mais barato.</strong><br><span class="muted">Você economizaria <b>${money(diff)}</b>. O parcelado custa ${pct.toFixed(1)}% a mais.</span>`:diff<0?`<strong>🟢 O parcelado está mais barato nesta comparação.</strong><br><span class="muted">A diferença é de ${money(Math.abs(diff))}.</span>`:`<strong>🟡 Os dois custam o mesmo.</strong>`;show(state.original,[['À vista',money(x.cash)],['Parcelado',`${x.count}x de ${money(x.each)}`],['Total parcelado',money(x.total)],['Diferença',money(Math.abs(diff))]],h)}
+function extractMoneyValues(text){
+  const s=String(text);
+  const explicit=s.match(/r\$\s*[0-9]+(?:[.][0-9]{3})*(?:,[0-9]{1,2})?\s*(?:milhões?|milhão|mil|k)?/gi)||[];
+  if(explicit.length) return explicit.map(parseMoney).filter(v=>Number.isFinite(v)&&v>0);
+  const worded=s.match(/\b[0-9]+(?:[.,][0-9]+)?\s*(?:milhões?|milhão|mil|k)\b/gi)||[];
+  return worded.map(parseMoney).filter(v=>Number.isFinite(v)&&v>0);
+}
+function normalizeProductQuery(text, price){
+  let product=String(text)
+    .replace(/^.*?esse produto está caro\??/i,'')
+    .replace(/^.*?este produto está caro\??/i,'')
+    .replace(/^.*?está caro\??/i,'')
+    .replace(/\bcusta\s*(?:r\$\s*)?[0-9]+(?:[.][0-9]{3})*(?:,[0-9]{1,2})?\s*(?:milhões?|milhão|mil|k)?/i,'')
+    .replace(/\bpor\s*(?:r\$\s*)?[0-9]+(?:[.][0-9]{3})*(?:,[0-9]{1,2})?\s*(?:milhões?|milhão|mil|k)?/i,'')
+    .replace(/\bde\s*r\$\s*[0-9.,]+/i,'')
+    .replace(/\s+/g,' ').trim();
+  product=product.replace(/^[:,-]+/,'').trim() || 'produto';
+  return product;
+}
+function searchUrl(base, qtxt){ return base + qtxt; }
+function precoStart(text){
+  const values=extractMoneyValues(text);
+  const p=values[0]||0;
+  state.data.price=p;
+  state.data.product=normalizeProductQuery(text,p);
+  if(!p){
+    return ask(text,[['Categoria','Preço'],['Dado necessário','Preço atual'],['Nível','Médio'],['Exemplo','R$ 1.999']], 'Qual é o preço atual do produto?','Ex.: R$ 1.999');
+  }
+  const qtxt=encodeURIComponent(state.data.product);
+  const links=[
+    ['🔎 Google Shopping',`https://www.google.com/search?tbm=shop&q=${qtxt}`],
+    ['🛒 Mercado Livre',`https://lista.mercadolivre.com.br/${qtxt}`],
+    ['📦 Amazon',`https://www.amazon.com.br/s?k=${qtxt}`],
+    ['🛍️ Buscapé',`https://www.buscape.com.br/search?q=${qtxt}`]
+  ];
+  show(text,[['Categoria','Preço'],['Preço atual',money(p)],['Produto identificado',state.data.product],['Próximo passo','Pesquisar referências']],
+    `<strong>🔎 Vamos comparar o preço real.</strong><br><span class="muted">O protótipo gratuito ainda não consegue coletar preços automaticamente de lojas. Ele já prepara as pesquisas com o produto identificado. Abra as fontes abaixo, confira o mesmo modelo/versão e cole os preços encontrados.</span>
+    <div class="searchpanel"><h3>Pesquisar este produto</h3><div class="small">Produto pesquisado: <b>${state.data.product.replace(/</g,'&lt;')}</b></div><div class="searchlinks">${links.map(([label,url])=>`<a class="searchlink" target="_blank" rel="noopener noreferrer" href="${url}">${label}</a>`).join('')}</div><button class="ghost searchall" id="openAll">🔎 Abrir pesquisas</button></div>
+    <div class="followbox"><input id="follow" class="followinput" placeholder="Ex.: R$ 2.200, R$ 2.050, R$ 2.180"><button class="btn" id="followBtn" style="height:49px">Comparar preços</button></div>
+    <div class="note">Regra importante: compare exatamente a mesma versão, capacidade, condição e garantia.</div>`);
+  const f=document.getElementById('follow');
+  const go=()=>{if(f.value.trim())nextFollow(f.value.trim())};
+  document.getElementById('followBtn').onclick=go;
+  f.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+  document.getElementById('openAll').onclick=()=>links.forEach(([,url])=>window.open(url,'_blank','noopener'));
+  setTimeout(()=>f.focus(),60);
+}
+function compararStart(text){const p=parseMoney(text);state.data.a=p;if(p)ask(text,[['Categoria','Comparação'],['Opção A',money(p)],['Próximo dado','Opção B'],['Nível','Médio']],'Qual é o preço da segunda opção?','Ex.: R$ 1.700');else ask(text,[['Categoria','Comparação'],['Dado necessário','Preço A'],['Exemplo','R$ 1.500'],['Nível','Médio']],'Digite o preço da primeira opção.','Ex.: R$ 1.500')}
+function gastoStart(text){const nums=(text.match(/\d+[\d.,]*/g)||[]).map(n=>nBR(n));if(nums.length>=1){state.data.base=nums[0];state.data.factor=/litro|litros/.test(text.toLowerCase())?'litro':'mês'; if(/combustível|combustivel/.test(text.toLowerCase()))ask(text,[['Categoria','Combustível'],['Valor informado',money(nums[0])],['Próximo dado','Consumo'],['Nível','Médio']],'Quanto você gasta ou qual o consumo? Informe os dados faltantes, por exemplo: “gasto R$ 800/mês e consumo 10 km/l”.','Ex.: R$ 800 por mês');else ask(text,[['Categoria','Gasto'],['Valor inicial',money(nums[0])],['Próximo dado','Período'],['Nível','Médio']],'Qual é o período ou frequência?','Ex.: 6 meses')}else ask(text,[['Categoria','Gasto'],['Dado necessário','Valor'],['Exemplo','R$ 800 por mês'],['Nível','Médio']],'Qual é o valor gasto?','Ex.: R$ 800')}
+function lucroStart(text){const nums=(text.match(/\d+[\d.,]*/g)||[]).map(n=>nBR(n));if(nums.length>=2){const venda=nums[0],custo=nums[1],lucro=venda-custo,margem=venda?lucro/venda*100:0;show(text,[['Venda',money(venda)],['Custo',money(custo)],['Lucro',money(lucro)],['Margem',margem.toFixed(1)+'%']],lucro>0?`<strong>✅ Há lucro.</strong><br><span class="muted">Você fica com ${money(lucro)} por venda.</span>`:`<strong>🔴 Não há lucro.</strong><br><span class="muted">O resultado é ${money(lucro)}.`); } else ask(text,[['Categoria','Lucro'],['Dados necessários','Venda + custo'],['Exemplo','Vendi por R$ 1.000 e gastei R$ 650'],['Nível','Médio']],'Informe preço de venda e custo total.','Ex.: R$ 1.000 de venda e R$ 650 de custo')}
+function percentStart(text){const nums=(text.match(/\d+[\d.,]*/g)||[]).map(n=>parseFloat(n.replace('.','').replace(',','.')));if(nums.length>=2){const p=nums[0],base=nums[1],val=base*p/100;show(text,[['Percentual',p.toLocaleString('pt-BR')+'%'],['Base',money(base)],['Resultado',money(val)],['Fórmula',p+'% × '+money(base)]],`<strong>✅ Resultado.</strong><br><span class="muted">${p}% de ${money(base)} é <b>${money(val)}</b>.</span>`)}else ask(text,[['Categoria','Porcentagem'],['Dado necessário','Percentual + valor'],['Exemplo','15% de R$ 2.000'],['Nível','Baixo']],'Informe o percentual e o valor base.','Ex.: 15% de R$ 2.000')}
+function regra3Start(text){const nums=(text.match(/\d+[\d.,]*/g)||[]).map(n=>nBR(n));if(nums.length>=3){const x=nums[0],y=nums[1],z=nums[2],ans=y*z/x;show(text,[['Referência A',x],['Referência B',y],['Novo valor',z],['Resultado',ans.toLocaleString('pt-BR')]],`<strong>✅ Regra de três.</strong><br><span class="muted">O resultado estimado é <b>${ans.toLocaleString('pt-BR',{maximumFractionDigits:2})}</b>.</span>`)}else ask(text,[['Categoria','Regra de três'],['Dado necessário','3 números'],['Exemplo','3 itens custam R$ 90; 10 custam quanto?'],['Nível','Baixo']],'Informe os 3 valores que faltam.','Ex.: 3, 90, 10')}
+function unitStart(text){const nums=(text.match(/\d+[\d.,]*/g)||[]).map(n=>nBR(n));if(nums.length>=2){const a=nums[0],b=nums[1],u=a/b;show(text,[['Valor total',money(a)],['Quantidade',b],['Por unidade',money(u)],['Fórmula',money(a)+' ÷ '+b]],`<strong>✅ Custo unitário.</strong><br><span class="muted">Cada unidade custa aproximadamente <b>${money(u)}</b>.</span>`)}else ask(text,[['Categoria','Custo unitário'],['Dado necessário','Total + quantidade'],['Exemplo','R$ 240 em 12 peças'],['Nível','Baixo']],'Informe o valor total e a quantidade.','Ex.: R$ 240 em 12 peças')}
+function parcelStart(text){const combo=cashVs(text,parseMoney(text));if(combo)return valeResult(combo);const p=parseMoney(text);if(p)ask(text,[['Categoria','Parcelamento'],['Valor',money(p)],['Próximo dado','Parcelas'],['Nível','Médio']],'Quantas parcelas e qual o valor de cada uma?','Ex.: 12x de R$ 250');else ask(text,[['Categoria','Parcelamento'],['Dado necessário','Valor + parcelas'],['Exemplo','12x de R$ 250'],['Nível','Médio']],'Informe o número de parcelas e o valor de cada uma.','Ex.: 12x de R$ 250')}
+function veiculoStart(text){const p=parseMoney(text);state.data.price=p;if(p)ask(text,[['Categoria','Veículo'],['Preço',money(p)],['Próximo dado','Entrada'],['Nível','Alto impacto']],'Quanto será a entrada?','Ex.: R$ 20 mil');else ask(text,[['Categoria','Veículo'],['Dado necessário','Preço'],['Exemplo','R$ 80 mil'],['Nível','Alto']],'Qual é o preço do veículo?','Ex.: R$ 80 mil')}
+function geral(text){show(text,[['Categoria','Pergunta geral'],['Objetivo','Entender a dúvida'],['Próximo passo','Adicionar contexto'],['Status','Modo protótipo']],`<strong>🤖 Entendi a pergunta.</strong><br><span class="muted">Ainda estou aprendendo esse tipo de decisão. Tente perguntas sobre <b>metas, preços, parcelas, comparações, gastos, lucro, porcentagens ou custo por unidade</b>.</span>`)}
+function nextFollow(v){switch(state.flow){case'meta':{const m=parseMonths(v);if(m&&state.data.target)return metaResult(state.data.target,m);return ask(state.original,[['Meta',money(state.data.target||0)],['Prazo','Não reconhecido'],['Exemplo','12 meses'],['Status','Faltam dados']], 'Informe o prazo como “12 meses” ou “2 anos”.','Ex.: 12 meses')}
+case'vale':{const x=cashVs(v,state.data.price);if(x)return valeResult(x);const p=parseMoney(v);if(p){state.data.price=p;return ask(state.original,[['Preço',money(p)],['Próximo dado','Parcelamento'],['Status','Preço salvo'],['Nível','Médio']],'Agora diga a condição parcelada.','Ex.: 10x de R$ 230')}return ask(state.original,[['Status','Não reconhecido'],['Exemplo','10x de R$ 230'],['Próximo passo','Condição'],['Nível','Médio']],'Informe a condição de pagamento.','Ex.: 10x de R$ 230')}
+case'preco':{const refs=extractMoneyValues(v),p=state.data.price||0;if(refs.length&&p){const sorted=[...refs].sort((a,b)=>a-b),median=sorted.length%2?sorted[(sorted.length-1)/2]:(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2,avg=refs.reduce((a,b)=>a+b,0)/refs.length,diff=p-median,pct=median?diff/median*100:0,label=pct<=-15?'🟢 Excelente preço':pct<=-5?'🟢 Abaixo da referência':pct<5?'🟡 Próximo da referência':pct<15?'🟠 Acima da referência':'🔴 Muito acima da referência',sentence=pct<0?`O preço informado está ${Math.abs(pct).toFixed(1)}% abaixo da mediana das referências.`:pct>0?`O preço informado está ${pct.toFixed(1)}% acima da mediana das referências.`:'O preço informado está praticamente igual à mediana das referências.';return show(state.original,[['Preço atual',money(p)],['Mediana',money(median)],['Média',money(avg)],['Referências',refs.length]],`<strong>${label}</strong><br><span class="muted">${sentence}</span><br><span class="muted">Diferença para a mediana: <b>${money(Math.abs(diff))}</b>.</span><div class="note">⚠️ Esta comparação usa os preços que você informou. Ainda não estamos coletando preços automaticamente.</div>`)}return ask(state.original,[['Preço atual',money(p)],['Referências','Não reconhecidas'],['Status','Faltam preços'],['Exemplo','R$ 2.200, R$ 2.050'],['Nível','Médio']],'Digite um ou mais preços de referência, por exemplo “R$ 2.200, R$ 2.050, R$ 2.180”.','Ex.: R$ 2.200, R$ 2.050, R$ 2.180')}
+case'comparar':{const b=parseMoney(v);if(b&&state.data.a){const a=state.data.a,d=Math.abs(a-b),who=a<b?'A':'B',pct=Math.max(a,b)?d/Math.max(a,b)*100:0;return show(state.original,[['Opção A',money(a)],['Opção B',money(b)],['Mais barata',who],['Diferença',money(d)]],`<strong>⚖️ Comparação concluída.</strong><br><span class="muted">A opção <b>${who}</b> é mais barata por ${money(d)} (${pct.toFixed(1)}% entre as opções).</span>`)}return ask(state.original,[['Opção A',money(state.data.a||0)],['Opção B','Não reconhecida'],['Status','Faltam dados'],['Nível','Médio']],'Digite o preço da segunda opção.','Ex.: R$ 1.700')}
+case'percent':{const ns=(v.match(/\d+[\d.,]*/g)||[]).map(n=>parseFloat(n.replace('.','').replace(',','.')));if(ns.length>=2){const val=ns[0]*ns[1]/100;return show(state.original,[['Percentual',ns[0]+'%'],['Base',money(ns[1])],['Resultado',money(val)],['Cálculo','percentual × base']],`<strong>✅ Resultado.</strong><br><span class="muted">${ns[0]}% de ${money(ns[1])} é <b>${money(val)}</b>.</span>`)}return ask(state.original,[['Percentual','Não reconhecido'],['Base','Não reconhecida'],['Status','Faltam dados'],['Nível','Baixo']],'Use este formato: “15% de R$ 2.000”.','Ex.: 15% de R$ 2.000')}
+case'unit':{const ns=(v.match(/\d+[\d.,]*/g)||[]).map(n=>nBR(n));if(ns.length>=2)return show(state.original,[['Total',money(ns[0])],['Quantidade',ns[1]],['Por unidade',money(ns[0]/ns[1])],['Fórmula',money(ns[0])+' ÷ '+ns[1]]],`<strong>✅ Custo unitário.</strong><br><span class="muted">Cada unidade custa <b>${money(ns[0]/ns[1])}</b>.</span>`);return ask(state.original,[['Total','Não reconhecido'],['Quantidade','Não reconhecida'],['Status','Faltam dados'],['Nível','Baixo']],'Informe total e quantidade.','Ex.: R$ 240 em 12 peças')}
+default:return geral(state.original)}}
+
+document.getElementById('analyze').onclick=()=>{const t=q.value.replace(/\s+/g,' ').trim();if(t)analyze(t)};
+q.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('analyze').click()});
+document.getElementById('again').onclick=()=>{result.classList.remove('show');q.value='';q.focus()};
+document.getElementById('copy').onclick=async()=>{const txt=`CLICK AI\nPergunta: ${shown.textContent}\n${verdict.innerText}`;try{await navigator.clipboard.writeText(txt);alert('Resultado copiado!')}catch(e){alert('Não foi possível copiar automaticamente.')}};
+</script><script>
+(function(){
+  const originalAnalyze = window.analisar;
+  window.clickAiOnlineSearch = async function(query){
+    const res = await fetch('/api/search?q=' + encodeURIComponent(query));
+    return await res.json();
+  };
+})();
+</script>
+</body></html>
