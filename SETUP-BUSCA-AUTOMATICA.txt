@@ -1,0 +1,25 @@
+CLICK AI — busca automática de preços
+
+ESTRUTURA
+- index.html = site/GitHub Pages
+- click-ai-online-v1.4-worker.js = Cloudflare Worker
+
+POR QUE O WORKER?
+O GitHub Pages não deve guardar uma chave secreta. A chave do provedor de busca fica no Worker.
+
+PROVEDOR TESTADO
+SerpApi oferece atualmente um plano gratuito de 250 buscas/mês; os planos pagos começam acima disso. Verifique os preços atuais na página oficial antes de contratar.
+
+PASSOS
+1. Crie uma conta no SerpApi e copie sua API key.
+2. No Cloudflare, crie um Worker e publique o conteúdo de click-ai-online-v1.4-worker.js.
+3. No Worker, crie o secret SERPAPI_KEY com sua chave.
+4. Copie a URL pública do Worker.
+5. No index.html, preencha window.CLICK_AI_CONFIG.SEARCH_API_URL com essa URL.
+6. Faça commit do index.html no GitHub Pages.
+
+SEGURANÇA
+Nunca coloque a SERPAPI_KEY dentro do index.html ou no GitHub.
+
+VALIDAÇÃO
+Comece com poucas consultas para validar o produto. O retorno deve ser tratado como referência de mercado, não garantia de preço final; frete, estoque, vendedor e condição precisam ser conferidos.
