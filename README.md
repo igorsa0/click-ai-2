@@ -21,3 +21,4 @@ Não coloque a chave dentro do `index.html`.
 
 ## Importante
 A primeira versão não finge que sabe preços reais. Ela só mostra dados reais quando uma fonte de busca externa estiver configurada. Para comparar preços, ainda precisamos criar uma camada de extração/normalização que reconheça produto, versão, condição, preço e frete antes de apresentar um veredito.
+CLICK AI busca automática - teste
