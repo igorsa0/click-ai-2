@@ -74,7 +74,7 @@ h1{font-size:clamp(42px,7vw,78px);line-height:.98;letter-spacing:-4px;margin:0 a
     <div id="metrics" class="metrics"></div>
     <div id="verdict" class="verdict"></div>
     <div class="actions"><button class="ghost" id="again">← Fazer outra análise</button><button class="ghost" id="copy">Copiar resultado</button></div>
-    <div class="note">Protótipo gratuito. Comparações de preço usam somente referências que você informar nesta versão. O CLICK AI ainda não coleta preços automaticamente nem substitui orientação profissional.</div>
+    <div class="note">O CLICK AI pode consultar referências online quando a busca automática estiver conectada. Produtos com versão, capacidade ou condição diferente são separados da comparação principal.</div>
   </div>
 </section>
 </main>
@@ -113,7 +113,7 @@ function metaStart(text){const target=parseMoney(text),months=parseMonths(text);
 function metaResult(target,months){if(!months)return;const per=target/months;show(state.original,[['Meta',money(target)],['Prazo',months+' meses'],['Guardar por mês',money(per)],['Total sem juros',money(target)]],`<strong>✅ Meta calculada.</strong><br><span class="muted">Para juntar ${money(target)} em ${months} meses, você precisa guardar aproximadamente <b>${money(per)}</b> por mês.</span>`);}
 function valeStart(text){const vals=extractMoneyValues(text),combo=parseInstallment(text);if(combo){const p=vals[0]||0;if(p)return valeResult({p,n:combo.n,par:combo.value,total:combo.n*combo.value,diff:combo.n*combo.value-p,pct:(combo.n*combo.value-p)/p*100});}if(vals.length>=2){const p=vals[0],par=vals[1],n=(text.match(/(\d+)\s*(?:parcelas?|x|vezes?)/i)||[])[1];if(n){const total=Number(n)*par,diff=total-p;return valeResult({p,n:Number(n),par,total,diff,pct:diff/p*100});}}if(vals[0]){state.data.price=vals[0];return ask(text,[['Categoria','Vale a pena'],['À vista',money(vals[0])],['Próximo dado','Parcelamento'],['Status','Preço salvo']], 'Qual é a condição parcelada?','Ex.: 10x de R$ 230');}return ask(text,[['Categoria','Vale a pena'],['Dado necessário','Preço à vista'],['Exemplo','R$ 2.000'],['Status','Faltam dados']], 'Qual é o valor à vista?','Ex.: R$ 2.000');}
 function valeResult(x){const label=x.diff>0?'✅ À vista é mais barato.':x.diff<0?'🟢 Parcelado está saindo mais barato.':'🟡 Os dois custam o mesmo.';show(state.original,[['À vista',money(x.p)],['Parcelado',x.n+'x de '+money(x.par)],['Total parcelado',money(x.total)],['Diferença',money(Math.abs(x.diff))]],`<strong>${label}</strong><br><span class="muted">O parcelado custa ${Math.abs(x.pct).toFixed(1)}% ${x.diff>=0?'a mais':'a menos'} que o valor à vista.</span>`);}
-function precoStart(text){const p=parseMoney(text);state.data.price=p;let product=text.replace(/esse produto está caro\??/i,'').replace(/custa\s+r?\$?\s*[0-9][0-9.,]*\s*(?:milhões?|milhão|mil|k)?/i,'').trim();if(p&&product){show(text,[['Preço atual',money(p)],['Produto',product]],`<strong>🔎 Vamos comparar o preço.</strong><br><span class="muted">Informe referências encontradas para o mesmo produto, versão e condição.</span><div class="search-panel"><h3>Pesquisar referência</h3><div class="search-links"><a class="search-link" target="_blank" rel="noopener" href="https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product)}">🔎 Google Shopping</a><a class="search-link" target="_blank" rel="noopener" href="https://lista.mercadolivre.com.br/${encodeURIComponent(product)}">🛒 Mercado Livre</a><a class="search-link" target="_blank" rel="noopener" href="https://www.amazon.com.br/s?k=${encodeURIComponent(product)}">📦 Amazon</a></div><div class="follow"><input id="follow" placeholder="Ex.: R$ 3.100, R$ 3.250, R$ 3.090"><button class="primary" id="followBtn">Comparar</button></div></div>`);const f=document.getElementById('follow');const go=()=>{const vals=extractMoneyValues(f.value);if(!vals.length)return;const s=[...vals].sort((a,b)=>a-b),med=s.length%2?s[(s.length-1)/2]:(s[s.length/2-1]+s[s.length/2])/2,avg=vals.reduce((a,b)=>a+b,0)/vals.length,diff=p-med,pct=med?diff/med*100:0;const label=pct<=-15?'🟢 Excelente preço':pct<=-5?'🟢 Abaixo da referência':pct<5?'🟡 Próximo da referência':pct<15?'🟠 Acima da referência':'🔴 Muito acima da referência';show(state.original,[['Preço atual',money(p)],['Mediana',money(med)],['Média',money(avg)],['Referências',vals.length]],`<strong>${label}</strong><br><span class="muted">${pct<0?`O preço está ${Math.abs(pct).toFixed(1)}% abaixo da mediana.`:pct>0?`O preço está ${pct.toFixed(1)}% acima da mediana.`:'O preço está praticamente igual à mediana.'}</span><br><span class="muted">Diferença: <b>${money(Math.abs(diff))}</b>.</span>`)};document.getElementById('followBtn').onclick=go;f.addEventListener('keydown',e=>{if(e.key==='Enter')go()});return;}ask(text,[['Preço atual',p?money(p):'Não reconhecido'],['Status','Faltam dados'],['Próximo passo','Informar o preço'],['Nível','Médio']], 'Qual é o preço do produto?','Ex.: R$ 1.900');}
+function precoStart(text){const p=parseMoney(text);state.data.price=p;let product=text.replace(/esse produto está caro\??/i,'').replace(/custa\s+r?\$?\s*[0-9][0-9.,]*\s*(?:milhões?|milhão|mil|k)?/i,'').trim();if(p&&product){show(text,[['Preço atual',money(p)],['Produto',product]],`<strong>🔎 Vamos comparar o preço.</strong><br><span class="muted">Informe referências encontradas para o mesmo produto, versão e condição.</span><div class="search-panel"><h3>Pesquisar referência</h3><button class="search-link" type="button" id="autoSearchBtn">⚡ Buscar preços automaticamente</button><div class="search-links"><a class="search-link" target="_blank" rel="noopener" href="https://www.google.com/search?tbm=shop&q=${encodeURIComponent(product)}">🔎 Google Shopping</a><a class="search-link" target="_blank" rel="noopener" href="https://lista.mercadolivre.com.br/${encodeURIComponent(product)}">🛒 Mercado Livre</a><a class="search-link" target="_blank" rel="noopener" href="https://www.amazon.com.br/s?k=${encodeURIComponent(product)}">📦 Amazon</a></div><div class="follow"><input id="follow" placeholder="Ex.: R$ 3.100, R$ 3.250, R$ 3.090"><button class="primary" id="followBtn">Comparar</button></div></div>`);const f=document.getElementById('follow');const go=()=>{const vals=extractMoneyValues(f.value);if(!vals.length)return;const s=[...vals].sort((a,b)=>a-b),med=s.length%2?s[(s.length-1)/2]:(s[s.length/2-1]+s[s.length/2])/2,avg=vals.reduce((a,b)=>a+b,0)/vals.length,diff=p-med,pct=med?diff/med*100:0;const label=pct<=-15?'🟢 Excelente preço':pct<=-5?'🟢 Abaixo da referência':pct<5?'🟡 Próximo da referência':pct<15?'🟠 Acima da referência':'🔴 Muito acima da referência';show(state.original,[['Preço atual',money(p)],['Mediana',money(med)],['Média',money(avg)],['Referências',vals.length]],`<strong>${label}</strong><br><span class="muted">${pct<0?`O preço está ${Math.abs(pct).toFixed(1)}% abaixo da mediana.`:pct>0?`O preço está ${pct.toFixed(1)}% acima da mediana.`:'O preço está praticamente igual à mediana.'}</span><br><span class="muted">Diferença: <b>${money(Math.abs(diff))}</b>.</span>`)};document.getElementById('followBtn').onclick=go;f.addEventListener('keydown',e=>{if(e.key==='Enter')go()});const auto=document.getElementById('autoSearchBtn');if(auto)auto.onclick=()=>window.clickAiRunPriceSearch(text,product,p);return;}ask(text,[['Preço atual',p?money(p):'Não reconhecido'],['Status','Faltam dados'],['Próximo passo','Informar o preço'],['Nível','Médio']], 'Qual é o preço do produto?','Ex.: R$ 1.900');}
 function compararStart(text){const vals=extractMoneyValues(text);if(vals.length>=2){const [a,b]=vals,d=Math.abs(a-b),who=a<b?'A':'B';show(text,[['Opção A',money(a)],['Opção B',money(b)],['Mais barata',who],['Diferença',money(d)]],`<strong>⚖️ Comparação concluída.</strong><br><span class="muted">A opção <b>${who}</b> é mais barata por ${money(d)}.</span>`);return;}ask(text,[['Categoria','Comparação'],['Dado necessário','Dois preços'],['Exemplo','R$ 1.700 e R$ 2.050'],['Próximo passo','Comparar']], 'Informe os dois preços.','Ex.: R$ 1.700 e R$ 2.050');}
 function percentStart(text){const nums=(String(text).match(/[0-9]+(?:[.,][0-9]+)?/g)||[]).map(v=>parseNumberBR(v));if(nums.length>=2){const r=nums[0]*nums[1]/100;show(text,[['Percentual',nums[0]+'%'],['Base',money(nums[1])],['Resultado',money(r)],['Fórmula',nums[0]+'% × '+money(nums[1])]],`<strong>✅ Resultado.</strong><br><span class="muted">${nums[0]}% de ${money(nums[1])} é <b>${money(r)}</b>.</span>`);return;}ask(text,[['Categoria','Porcentagem'],['Dado necessário','Percentual + valor'],['Exemplo','15% de R$ 2.000'],['Status','Faltam dados']], 'Informe percentual e valor base.','Ex.: 15% de R$ 2.000');}
 function lucroStart(text){const vals=extractMoneyValues(text);if(vals.length>=2){const venda=vals[0],custo=vals[1],lucro=venda-custo,margem=venda?lucro/venda*100:0;show(text,[['Venda',money(venda)],['Custo',money(custo)],['Lucro',money(lucro)],['Margem',margem.toFixed(1)+'%']],lucro>0?`<strong>✅ Há lucro.</strong><br><span class="muted">Lucro estimado de <b>${money(lucro)}</b> por venda.</span>`:`<strong>🔴 Não há lucro.</strong><br><span class="muted">Resultado estimado: <b>${money(lucro)}</b>.</span>`);return;}ask(text,[['Categoria','Lucro'],['Dado necessário','Venda + custo'],['Exemplo','R$ 1.000 de venda e R$ 650 de custo'],['Status','Faltam dados']], 'Informe venda e custo total.','Ex.: R$ 1.000 de venda e R$ 650 de custo');}
@@ -172,27 +172,90 @@ document.getElementById('copy').onclick=async()=>{const txt=`CLICK AI\nPergunta:
 </script>
 
 <script>
-// CLICK AI — busca automática (opcional). Depois de publicar o Worker, troque a URL abaixo.
+// CLICK AI — busca automática e filtro de equivalência
 window.CLICK_AI_CONFIG = {
-  SEARCH_API_URL: ''
+  SEARCH_API_URL: 'https://click-ai-2.safxbusiness.workers.dev/api/search'
 };
 
+function normalizeText(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+function productTokens(product){
+  return normalizeText(product).replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean);
+}
+function isLikelyUsed(text){
+  return /\busado\b|\bseminovo\b|\bsemi[- ]novo\b|\brefurbished\b|\brecondicionado\b|\brestaurado\b|\b86%\b|\b90%\s*bateria/.test(normalizeText(text));
+}
+function parseGb(text){
+  const m=normalizeText(text).match(/(64|128|256|512|1024)\s*gb/);
+  return m?parseInt(m[1],10):null;
+}
+function isSameProduct(query,title){
+  const q=normalizeText(query), t=normalizeText(title);
+  if(!t) return false;
+  // versões explicitamente diferentes não entram na comparação principal
+  const qGb=parseGb(q), tGb=parseGb(t);
+  if(qGb && tGb && qGb!==tGb) return false;
+  if(q.includes('pro') && !t.includes('pro')) return false;
+  if(!q.includes('pro') && /\bpro\b/.test(t)) return false;
+  if(q.includes('plus') && !t.includes('plus')) return false;
+  if(!q.includes('plus') && /\bplus\b/.test(t)) return false;
+  if(q.includes('max') && !t.includes('max')) return false;
+  if(!q.includes('max') && /\bmax\b/.test(t)) return false;
+  const tokens=productTokens(q).filter(x=>!['por','de','e','o','a','com','gb'].includes(x));
+  const hits=tokens.filter(tok=>t.includes(tok));
+  return tokens.length?hits.length/Math.max(tokens.length,1)>=0.6:true;
+}
+function extractSearchProduct(original){
+  let s=String(original);
+  s=s.replace(/^(esse produto esta caro\??|este produto esta caro\??|est[aá] caro\??)\s*/i,'');
+  const pm=s.match(/(?:por|custa|vale|de)\s+r\$\s*[0-9][0-9.,]*\s*(?:milh(?:oes|ao)?|mil|mi|k)?/i);
+  if(pm) s=s.replace(pm[0],'');
+  s=s.replace(/[?.!,;]+/g,' ').replace(/\s+/g,' ').trim();
+  s=s.replace(/\b(esta|est[aá]|caro|barato|vale a pena)\b/gi,'').replace(/\s+/g,' ').trim();
+  return s;
+}
+function priceFromItem(item){
+  const n=Number(item?.extracted_price);
+  return Number.isFinite(n)&&n>0?n:null;
+}
+function median(a){ const s=[...a].sort((x,y)=>x-y); return s.length%2?s[(s.length-1)/2]:(s[s.length/2-1]+s[s.length/2])/2; }
+function moneyList(a){return a.map(money).join(', ')}
+
 async function clickAiAutomaticSearch(query){
-  const url = (window.CLICK_AI_CONFIG.SEARCH_API_URL || '').trim();
-  if(!url){
-    alert('A busca automática ainda não foi conectada. Primeiro publique o Worker e coloque a URL dele em SEARCH_API_URL.');
-    return null;
-  }
+  const url=(window.CLICK_AI_CONFIG.SEARCH_API_URL||'').trim();
+  if(!url) return {ok:false,mode:'demo',results:[],message:'Busca automática não conectada.'};
+  const res=await fetch(url+'?q='+encodeURIComponent(query),{headers:{'Accept':'application/json'}});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return await res.json();
+}
+
+async function runLivePriceAnalysis(original, product, currentPrice){
+  show(original,[['Produto',product],['Preço atual',money(currentPrice)],['Status','Pesquisando...'],['Fonte','Busca online']],`<strong>🔎 Pesquisando preços reais.</strong><br><span class="muted">Buscando referências para <b>${product}</b> e filtrando versões diferentes.</span>`);
   try{
-    const res = await fetch(url + '?q=' + encodeURIComponent(query), {headers:{'Accept':'application/json'}});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    return await res.json();
+    const data=await clickAiAutomaticSearch(product);
+    if(!data?.ok || data.mode!=='live' || !Array.isArray(data.results)){
+      return show(original,[['Produto',product],['Preço atual',money(currentPrice)],['Status','Busca indisponível'],['Referências','0']],`<strong>⚠️ Busca não disponível.</strong><br><span class="muted">A pesquisa online ainda não retornou dados utilizáveis. Nenhum preço foi inventado.</span>`);
+    }
+    const usable=data.results.map(x=>({title:x.title||'',source:x.source||'Fonte',price:priceFromItem(x)}).filter(x=>x.title&&x.price&&isSameProduct(product,x.title)&&!isLikelyUsed(x.title)));
+    const prices=usable.map(x=>x.price);
+    if(!prices.length){
+      return show(original,[['Produto',product],['Preço atual',money(currentPrice)],['Status','Sem equivalentes'],['Resultados recebidos',data.results.length]],`<strong>⚠️ Não encontrei referências suficientemente equivalentes.</strong><br><span class="muted">O CLICK AI encontrou resultados, mas não os usou porque havia versões/condições diferentes. Isso evita uma comparação enganosa.</span>`);
+    }
+    const med=median(prices),avg=prices.reduce((a,b)=>a+b,0)/prices.length,min=Math.min(...prices),max=Math.max(...prices),diff=currentPrice-med,pct=med?diff/med*100:0;
+    const label=pct<=-15?'🟢 Excelente preço':pct<=-5?'🟢 Abaixo da referência':pct<5?'🟡 Próximo da referência':pct<15?'🟠 Acima da referência':'🔴 Muito acima da referência';
+    const sample=usable.slice(0,6).map(x=>`${x.title} — ${money(x.price)} (${x.source})`).join('<br>');
+    show(original,[['Produto',product],['Preço atual',money(currentPrice)],['Menor referência',money(min)],['Mediana',money(med)],['Média',money(avg)],['Maior referência',money(max)],['Comparáveis',prices.length]],`<strong>${label}</strong><br><span class="muted">Seu preço está <b>${Math.abs(pct).toFixed(1)}%</b> ${pct<0?'abaixo':'acima'} da mediana, diferença de <b>${money(Math.abs(diff))}</b>.</span><div class="search-panel"><h3>Referências usadas</h3><div class="muted">${sample}</div></div><div class="note">A comparação principal exclui anúncios claramente usados/seminovos e versões incompatíveis identificadas no título. Confira frete, garantia, vendedor e condições antes de comprar.</div>`);
   }catch(err){
     console.error(err);
-    alert('Não foi possível pesquisar agora. Tente novamente.');
-    return null;
+    show(original,[['Produto',product],['Preço atual',money(currentPrice)],['Status','Erro na busca'],['Referências','0']],`<strong>⚠️ Não foi possível concluir a busca.</strong><br><span class="muted">O CLICK AI não apresentou um preço estimado sem dados confiáveis.</span>`);
   }
 }
+
+// Expõe uma função simples para usar a busca automática a partir do módulo de preço.
+window.clickAiRunPriceSearch = async function(original, product, currentPrice){
+  return runLivePriceAnalysis(original,product,currentPrice);
+};
 </script>
 </body>
 </html>
