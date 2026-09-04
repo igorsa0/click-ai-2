@@ -225,7 +225,7 @@ function moneyList(a){return a.map(money).join(', ')}
 async function clickAiAutomaticSearch(query){
   const url=(window.CLICK_AI_CONFIG.SEARCH_API_URL||'').trim();
   if(!url) return {ok:false,mode:'demo',results:[],message:'Busca automática não conectada.'};
-  const res=await fetch(url+'?q='+encodeURIComponent(query),{headers:{'Accept':'application/json'}});
+  const res=await fetch(url+'?q='+encodeURIComponent(query),{method:'GET',mode:'cors',cache:'no-store',headers:{'Accept':'application/json'}});
   if(!res.ok) throw new Error('HTTP '+res.status);
   return await res.json();
 }
@@ -248,7 +248,7 @@ async function runLivePriceAnalysis(original, product, currentPrice){
     show(original,[['Produto',product],['Preço atual',money(currentPrice)],['Menor referência',money(min)],['Mediana',money(med)],['Média',money(avg)],['Maior referência',money(max)],['Comparáveis',prices.length]],`<strong>${label}</strong><br><span class="muted">Seu preço está <b>${Math.abs(pct).toFixed(1)}%</b> ${pct<0?'abaixo':'acima'} da mediana, diferença de <b>${money(Math.abs(diff))}</b>.</span><div class="search-panel"><h3>Referências usadas</h3><div class="muted">${sample}</div></div><div class="note">A comparação principal exclui anúncios claramente usados/seminovos e versões incompatíveis identificadas no título. Confira frete, garantia, vendedor e condições antes de comprar.</div>`);
   }catch(err){
     console.error(err);
-    show(original,[['Produto',product],['Preço atual',money(currentPrice)],['Status','Erro na busca'],['Referências','0']],`<strong>⚠️ Não foi possível concluir a busca.</strong><br><span class="muted">O CLICK AI não apresentou um preço estimado sem dados confiáveis.</span>`);
+    show(original,[['Produto',product],['Preço atual',money(currentPrice)],['Status','Erro na busca'],['Referências','0']],`<strong>⚠️ Não foi possível concluir a busca.</strong><br><span class="muted">O CLICK AI não conseguiu acessar o serviço de busca agora. Nenhum preço foi inventado.</span><br><span class="note">Abra diretamente o endpoint para diagnosticar: <b>${window.CLICK_AI_CONFIG.SEARCH_API_URL}</b></span>`);
   }
 }
 
